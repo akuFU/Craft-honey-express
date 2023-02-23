@@ -14,6 +14,7 @@ app.use(bodyParser.json());
 app.get('/api/productsList', async (req,res) => {
 
 	let data = {};
+	console.log(req);
 	db.all("SELECT * FROM products", function(err, rows) {
 
 		rows.forEach((row) => data[row.id] = row);
