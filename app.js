@@ -1,28 +1,26 @@
-import history from 'connect-history-api-fallback';
-import { createSSRApp } from 'vue';
-import { renderToString } from 'vue/server-renderer';
-import { fileURLToPath } from 'url';
-import { createServer as createViteServer } from 'vite';
-import fs from 'fs';
-import express from 'express';
-import path from 'path';
-import dot from 'dotenv';
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url))
-
-console.log(__dirname);
+const history = require('connect-history-api-fallback');
+const fs = require('fs');
+const express = require('express');
+const path = require('path');
+const dot = require('dotenv');
+const pg = require('pg');
 
 dot.config();
 let conString = process.env.CON_STRING;
-import pg from 'pg';
 const client = new pg.Client(conString);
 client.connect();
 
-import bodyParser from 'body-parser'
 const app = express(),
+	bodyParser = require("body-parser")
 	port = process.env.PORT || 3080;
 
 app.use(bodyParser.json());
+
+app.post('/api/users', (req, res) => {
+
+	console.log(req.body);
+
+});
 
 app.post('/api/language', (req, res) => {
 
@@ -76,13 +74,9 @@ app.use(history());
 
 app.use(express.static(path.join(__dirname, './Craft-honey/dist')));
 
-app.get('/', (req, res) => {
-
-
-});
-
 app.listen(port, () => {
 
 	console.log("hellofe world!")
 
 })
+
