@@ -2,5 +2,6 @@
 node_modules
 asd
 testdb.db
+.env
 /Craft-honey/*
 !/Craft-honey/dist
