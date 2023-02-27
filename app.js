@@ -19,6 +19,12 @@ app.use(bodyParser.json());
 app.post('/api/users', (req, res) => {
 
 	console.log(req.body);
+	let { '1': key, '2': uid, '3': type, '4': quantity } = req.body;
+	console.log(key)
+	let order = { id: key, quantity: quantity }
+	console.log(order)
+	client.query("SELECT * FROM products WHERE id=$1", [key])
+		.then((res) => console.log(res.rows));
 
 });
 
