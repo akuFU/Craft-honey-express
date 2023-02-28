@@ -18,13 +18,85 @@ app.use(bodyParser.json());
 
 app.post('/api/users', (req, res) => {
 
+	console.log(req)
+	client.query("INSERT INTO users(id) values($1)", [req.body[1]])
+		.then(resp => { console.log(resp) })
+		.catch(err => { console.log(err) })
+	
+});
+
+app.post('/api/usersAddCart', (req, res) => {
+
 	console.log(req.body);
 	let { '1': key, '2': uid, '3': type, '4': quantity } = req.body;
-	console.log(key)
 	let order = { id: key, quantity: quantity }
-	console.log(order)
-	client.query("SELECT * FROM products WHERE id=$1", [key])
-		.then((res) => console.log(res.rows));
+	
+	client.query("SELECT orders FROM users WHERE id=$1", [uid])
+		.then((resp) => {
+		
+			let content = JSON.parse(resp.rows[0].orders);
+			
+			try {
+			
+				content[key].quantity += quantity;
+				console.log(JSON.stringify(content));
+				client.query("UPDATE users SET orders = $1 WHERE id = $2", [`${JSON.stringify(content)}`, uid])
+				return
+			
+			} catch(error) {
+			
+				console.log(error);
+							
+			}
+		
+			if (resp.rows[0].orders == undefined || resp.rows[0].orders == null) {
+			
+				client.query("UPDATE users SET orders = $1 WHERE id = $2", [`{"${key}": ${JSON.stringify(order)}}`, uid])
+
+			} else {
+			
+				content = JSON.stringify(content).slice(1, JSON.stringify(content).length-1);
+				client.query("UPDATE users SET orders = $1 WHERE id = $2", [`{${content}, "${key}": ${JSON.stringify(order)}}`, uid])
+			
+			}
+
+		})
+		
+});
+
+app.post('/api/updateCart', (req, res) => {
+
+	client.query("SELECT orders FROM users WHERE id=$1", [req.body[3]])
+		.then((resp) => {
+		
+			let data = JSON.parse(resp.rows[0].orders);
+			data[req.body[1]].quantity = req.body[2];
+			client.query("UPDATE users SET orders = $1", [JSON.stringify(data)]);
+			
+		})
+		.catch((err) => console.log(err));
+
+});
+
+app.post('/api/deleteCart', (req, res) => {
+
+	client.query("SELECT orders FROM users WHERE id=$1", [req.body[2]])
+		.then((resp) => {
+		
+			let data = JSON.parse(resp.rows[0].orders);
+			delete data[req.body[1]]
+			client.query("UPDATE users SET orders = $1", [JSON.stringify(data)])
+			
+		})
+		.catch((err) => console.log(err));
+
+});
+
+app.post('/api/usersCart', (req, res) => {
+
+	client.query("SELECT orders FROM users WHERE id=$1", [req.body[1]])
+		.then(resp => { console.log(resp.rows[0]); res.json(resp.rows[0]) })
+		.catch(err => console.log(err))
 
 });
 
