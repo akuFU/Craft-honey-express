@@ -25,6 +25,26 @@ app.post('/api/users', (req, res) => {
 	
 });
 
+app.post('/app/updateUsers', (req, res) => {
+
+	if (req.body[1] == 'phone') {
+	
+		client.query("UPDATE users SET phone = $1 WHERE id = $2", [req.body[2], req.body[3]]);
+	
+	} else {
+		
+		client.query("UPDATE users SET address = $1 WHERE id = $2", [req.body[2], req.body[3]]);
+	
+	}
+
+});
+
+app.post('/api/addOrder', (req, res) => {
+
+	
+
+});
+
 app.post('/api/usersAddCart', (req, res) => {
 
 	console.log(req.body);
@@ -100,16 +120,15 @@ app.post('/api/usersCart', (req, res) => {
 
 });
 
-app.post('/api/language', (req, res) => {
+app.get('/api/language', (req, res) => {
 
-	let id = [req.body[1]];
-	console.log(id)
-	client.query("SELECT * FROM language WHERE id=$1", id)
+	console.log(req.query.lang);
+	client.query("SELECT * FROM language WHERE id=$1", [req.query.lang])
 		.then(resp => { res.json(resp.rows[0]) })
 		.catch(err => { console.log(err) })
 
 });
-
+/*
 app.post('/api/languages', (req, res) => {
 
 	let id = [req.body[1]];
@@ -119,6 +138,7 @@ app.post('/api/languages', (req, res) => {
 		.catch(err => { console.log(err) })
 
 });
+*/
 
 app.get('/api/productsList', async (req,res) => {
 
@@ -132,7 +152,7 @@ app.get('/api/productsList', async (req,res) => {
 
 	}); 
 
-})
+});
 
 app.get('/api/productsListOpt', async (req,res) => {
 
@@ -146,7 +166,7 @@ app.get('/api/productsListOpt', async (req,res) => {
 		
 	}); 
 
-})
+});
 
 app.use(history());
 
