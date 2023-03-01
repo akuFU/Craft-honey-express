@@ -25,7 +25,7 @@ app.post('/api/users', (req, res) => {
 	
 });
 
-app.post('/app/updateUsers', (req, res) => {
+app.post('/api/updateUsers', (req, res) => {
 
 	if (req.body[1] == 'phone') {
 	
