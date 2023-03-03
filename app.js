@@ -5,7 +5,7 @@ const path = require('path');
 const dot = require('dotenv');
 const pg = require('pg');
 const sqlite3 = require('sqlite3').verbose();
-const client = new sqlite3.Database('var/data/testdb.db');
+const client = new sqlite3.Database('./var/data/testdb.db');
 
 dot.config();
 /*
