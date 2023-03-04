@@ -6,8 +6,22 @@ const dot = require('dotenv');
 const pg = require('pg');
 const sqlite3 = require('sqlite3').verbose();
 const client = new sqlite3.Database('./var/data/testdb.db');
+const nodemailer = require('nodemailer');
 
 dot.config();
+
+let transporter = nodemailer.createTransport({
+
+	service: 'gmail',
+	auth: {
+	
+		user: process.env.EMAIL,
+		pass: process.env.PASS,
+	
+	}
+
+});
+
 /*
 let conString = process.env.CON_STRING;
 const client = new pg.Client(conString);
@@ -18,6 +32,41 @@ const app = express(),
 	port = process.env.PORT || 3080;
 
 app.use(bodyParser.json());
+
+app.get('/api/mail', (req, res) => {
+
+	let query = req.query;
+	
+	let mailOptions = {
+	
+		from: process.env.EMAIL,
+		to: process.env.EMAIL,
+		subject: 'Обратная связь',
+		text: `Пользователь ${query.name} оставил на сайте следующее сообщение: ${query.message}. 
+		
+Контактные данные пользователя:
+ 
+	Телефон: ${query.phone}
+	Email: ${query.mail}`
+	
+	}
+	console.log(mailOptions.text);
+	
+	transporter.sendMail(mailOptions, function (error, info) {
+	
+		if (error) {
+		
+			console.log(error);
+		
+		} else {
+		
+			console.log(info.response);
+		
+		}
+	
+	});
+
+});
 
 app.post('/api/users', (req, res) => {
 
@@ -158,6 +207,7 @@ app.get('/api/productsList', async (req,res) => {
 		for (let row of rows) {
 			data[row.id] = row;
 		}
+		console.log(JSON.stringify(data));
 		res.json(data);
 
 	}); 
