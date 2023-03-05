@@ -33,6 +33,12 @@ const app = express(),
 
 app.use(bodyParser.json());
 
+app.post('/api/addOrder', (req, res) => {
+
+	console.log(req.body);
+
+});
+
 app.get('/api/mail', (req, res) => {
 
 	let query = req.query;
