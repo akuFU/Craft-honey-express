@@ -68,21 +68,22 @@ app.post('/api/addOrder', (req, res) => {
 
 	console.log(req.body);
 	
-	let data = { "sum": req.body.sum, "address": req.body.address, "delivery": req.body.delivery, "status": "Неоплачен", "cart": req.body.cart };
+	let data = req.body;
 	
 	if (req.body.uid != '') {
 	
 		client.get("SELECT ordered FROM users WHERE id=?", [req.body.uid], function (err, rows) {
 		
-			let content = rows.ordered;
+			let content = JSON.parse(rows.ordered);
 		
-			if (!content || Object.keys(content).length == 0) {
+			if (!content || content.length == 0) {
 			
-				client.run("UPDATE users SET ordered = ? WHERE id = ?", [JSON.stringify(data), req.body.uid])
+				client.run("UPDATE users SET ordered = ? WHERE id = ?", [`[${JSON.stringify(data)}]`, req.body.uid])
 
 			} else {
 			
-				client.run("UPDATE users SET ordered = ? WHERE id = ?", [`${content}, ${JSON.stringify(data)}`, req.body.uid])
+				content = JSON.stringify(content).slice(1, JSON.stringify(content).length-1);
+				client.run("UPDATE users SET ordered = ? WHERE id = ?", [`[${content}, ${JSON.stringify(data)}]`, req.body.uid])
 			
 			}
 		
@@ -92,21 +93,51 @@ app.post('/api/addOrder', (req, res) => {
 	
 		client.get("SELECT ordered FROM users WHERE id=?", ["general"], function (err, rows) {
 		
-			let content = rows.ordered
+			let content = JSON.parse(rows.ordered);
 		
-			if (!content || Object.keys(content).length == 0) {
+			if (!content || content.length == 0) {
 			
-				client.run("UPDATE users SET ordered = ? WHERE id = ?", [JSON.stringify(data), "general"])
+				client.run("UPDATE users SET ordered = ? WHERE id = ?", [`[${JSON.stringify(data)}]`, "general"])
 
 			} else {
 			
-				client.run("UPDATE users SET ordered = ? WHERE id = ?", [`${content}, ${JSON.stringify(data)}`, "general"])
+				content = JSON.stringify(content).slice(1, JSON.stringify(content).length-1);
+				client.run("UPDATE users SET ordered = ? WHERE id = ?", [`[${content}, ${JSON.stringify(data)}]`, "general"])
 			
 			}
 		
 		})
 	
 	}
+	
+	let mailOptions = {
+	
+		from: process.env.EMAIL,
+		to: data.email,
+		subject: 'Заказ меда',
+		text: `Уважаемый покупатель!
+		
+Ваш заказ на сумму ${data.sum} сом на сайте craft-honey.onrender.com подтвержден! Благодарим Вас за покупку!
+ 
+Если этот заказ был сделан по ошибке - напишите нам об этом. Наш email: ${process.env.EMAIL}`
+	
+	}
+	console.log(mailOptions.text);
+	
+	transporter.sendMail(mailOptions, function (error, info) {
+	
+		if (error) {
+		
+			console.log(error);
+		
+		} else {
+		
+			console.log(info.response);
+		
+		}
+	
+	});
+	
 
 });
 
@@ -188,7 +219,7 @@ app.post('/api/updateUsers', (req, res) => {
 
 app.post('/api/usersAddCart', (req, res) => {
 
-	let { '1': key, '2': uid, '3': type, '4': quantity } = req.body;
+	let { '1': key, '2': uid, '4': quantity } = req.body;
 	let order = { id: key, quantity: quantity }
 	
 	client.get("SELECT orders FROM users WHERE id=?", [uid], function (err, rows) {
@@ -222,6 +253,26 @@ app.post('/api/usersAddCart', (req, res) => {
 	})
 		
 });
+
+app.post('/api/emptyCart', (req, res) => {
+
+	client.run('UPDATE users SET orders = "{}" WHERE id = ?', [req.body[1]]);
+
+})
+
+app.get('/api/getOrders', (req, res) => {
+
+	console.log(req.query)
+
+	client.get('SELECT ordered FROM users WHERE id=?', [req.query.user], function (err, rows) {
+	
+		console.log(JSON.parse(rows.ordered));
+		rows.ordered = JSON.parse(rows.ordered);
+		res.json(rows.ordered);
+	
+	});
+
+})
 
 app.post('/api/updateCart', (req, res) => {
 
