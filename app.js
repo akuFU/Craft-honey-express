@@ -263,15 +263,15 @@ app.post('/api/emptyCart', (req, res) => {
 app.get('/api/getOrders', (req, res) => {
 
 	console.log(req.query)
-
+	
 	client.get('SELECT ordered FROM users WHERE id=?', [req.query.user], function (err, rows) {
-	
-		console.log(JSON.parse(rows.ordered));
-		rows.ordered = JSON.parse(rows.ordered);
-		res.json(rows.ordered);
-	
+		
+			rows.ordered = JSON.parse(rows.ordered);
+			res.json(rows.ordered);
+		
 	});
-
+	
+	
 })
 
 app.post('/api/updateCart', (req, res) => {
