@@ -7,6 +7,7 @@ const pg = require('pg');
 const sqlite3 = require('sqlite3').verbose();
 const client = new sqlite3.Database('./var/data/testdb.db');
 const nodemailer = require('nodemailer');
+const admin = require('express-admin');
 
 dot.config();
 
@@ -31,11 +32,81 @@ const app = express(),
 	bodyParser = require("body-parser")
 	port = process.env.PORT || 3080;
 
-app.use(bodyParser.json());
+app.use(bodyParser.json({
+
+	limit: '50mb',
+
+}));
+app.use(bodyParser.raw({
+  type: 'image/png',
+	limit: '50mb',
+}));
+
+app.get('/api/blog', (req, res) => {
+
+	client.all('SELECT * FROM blog ORDER BY id DESC', function (err, rows) {
+
+		for (let row of rows) {
+
+			row.title = JSON.parse(row.title);
+			row.content = JSON.parse(row.content);
+				
+		}
+		res.json(rows);
+
+	});
+	
+});
+
+app.post('/api/blogPic', (req, res) => {
+
+	client.run("UPDATE blog SET image = ? WHERE id = 1", [req.body[1]]);
+
+});
 
 app.post('/api/addOrder', (req, res) => {
 
 	console.log(req.body);
+	
+	let data = { "sum": req.body.sum, "address": req.body.address, "delivery": req.body.delivery, "status": "Неоплачен", "cart": req.body.cart };
+	
+	if (req.body.uid != '') {
+	
+		client.get("SELECT ordered FROM users WHERE id=?", [req.body.uid], function (err, rows) {
+		
+			let content = rows.ordered;
+		
+			if (!content || Object.keys(content).length == 0) {
+			
+				client.run("UPDATE users SET ordered = ? WHERE id = ?", [JSON.stringify(data), req.body.uid])
+
+			} else {
+			
+				client.run("UPDATE users SET ordered = ? WHERE id = ?", [`${content}, ${JSON.stringify(data)}`, req.body.uid])
+			
+			}
+		
+		})
+	
+	} else {
+	
+		client.get("SELECT ordered FROM users WHERE id=?", ["general"], function (err, rows) {
+		
+			let content = rows.ordered
+		
+			if (!content || Object.keys(content).length == 0) {
+			
+				client.run("UPDATE users SET ordered = ? WHERE id = ?", [JSON.stringify(data), "general"])
+
+			} else {
+			
+				client.run("UPDATE users SET ordered = ? WHERE id = ?", [`${content}, ${JSON.stringify(data)}`, "general"])
+			
+			}
+		
+		})
+	
+	}
 
 });
 
@@ -76,7 +147,6 @@ app.get('/api/mail', (req, res) => {
 
 app.post('/api/users', (req, res) => {
 
-	console.log(req)
 	client.run("INSERT INTO users(id) values(?)", [req.body[1]], function (err) {
 	
 		console.log(err);
@@ -85,31 +155,39 @@ app.post('/api/users', (req, res) => {
 	
 });
 
+app.get('/api/userInfo', (req, res) => {
+
+	client.get("SELECT * FROM users WHERE id = ?", [req.query.user], function (err, rows) {
+	
+		console.log(rows);
+		res.json(rows);
+	
+	})
+	
+});
+
 app.post('/api/updateUsers', (req, res) => {
 
 	console.log(req.body);
-	
+
 	if (req.body[1] == 'phone') {
 	
 		client.run("UPDATE users SET phone = ?1 WHERE id = ?2", [req.body[2], req.body[3]]);
 	
+	} else if (req.body[1] == 'address') {
+	
+		client.run("UPDATE users SET address = ?1 WHERE id = ?2", [req.body[2], req.body[3]]);
+	
 	} else {
 		
-		client.run("UPDATE users SET address = ?1 WHERE id = ?2", [req.body[2], req.body[3]]);
+		client.run("UPDATE users SET delivery = ?1 WHERE id = ?2", [req.body[2], req.body[3]]);
 	
 	}
 
 });
 
-app.post('/api/addOrder', (req, res) => {
-
-	
-
-});
-
 app.post('/api/usersAddCart', (req, res) => {
 
-	console.log(req.body);
 	let { '1': key, '2': uid, '3': type, '4': quantity } = req.body;
 	let order = { id: key, quantity: quantity }
 	
@@ -175,7 +253,6 @@ app.post('/api/usersCart', (req, res) => {
 
 	client.get("SELECT orders FROM users WHERE id=?1", [req.body[1]], function (err, rows) {
 	
-		console.log(rows); 
 		res.json(rows);
 		
 	})
@@ -187,7 +264,10 @@ app.get('/api/language', (req, res) => {
 	console.log(typeof req.query.lang);
 	client.get("SELECT * FROM language WHERE id = ?", [req.query.lang], function (err, rows) {
 	
-		console.log(rows);
+		client.get("SELECT * FROM languageEasy WHERE id = ?", [req.query.lang], function (err, rows) {
+		
+
+		});
 		res.json(rows);
 	
 	})
@@ -213,7 +293,6 @@ app.get('/api/productsList', async (req,res) => {
 		for (let row of rows) {
 			data[row.id] = row;
 		}
-		console.log(JSON.stringify(data));
 		res.json(data);
 
 	}); 
