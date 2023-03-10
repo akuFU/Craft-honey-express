@@ -234,7 +234,15 @@ app.post('/api/usersAddCart', (req, res) => {
 	
 	client.get("SELECT orders FROM users WHERE id=?", [uid], function (err, rows) {
 		
-			let content = JSON.parse(rows.orders);
+			try {
+		
+				content = JSON.parse(rows.ordered);
+			
+			} catch (error) {
+			
+				content = {};
+			
+			}
 			
 			try {
 			
