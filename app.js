@@ -76,24 +76,15 @@ app.post('/api/addOrder', (req, res) => {
 		
 			let content;
 		
-			try {
-		
+			if (rows.ordered.length != 0) {
+			
 				content = JSON.parse(rows.ordered);
-			
-			} catch (error) {
-			
-				content = [];
-			
-			}
-		
-			if (!content || content.length == 0) {
-			
-				client.run("UPDATE users SET ordered = ? WHERE id = ?", [`[${JSON.stringify(data)}]`, req.body.uid])
+				content = JSON.stringify(content).slice(1, JSON.stringify(content).length-1);
+				client.run("UPDATE users SET ordered = ? WHERE id = ?", [`[${content}, ${JSON.stringify(data)}]`, req.body.uid])
 
 			} else {
 			
-				content = JSON.stringify(content).slice(1, JSON.stringify(content).length-1);
-				client.run("UPDATE users SET ordered = ? WHERE id = ?", [`[${content}, ${JSON.stringify(data)}]`, req.body.uid])
+				client.run("UPDATE users SET ordered = ? WHERE id = ?", [`[${JSON.stringify(data)}]`, req.body.uid])
 			
 			}
 		
@@ -105,24 +96,15 @@ app.post('/api/addOrder', (req, res) => {
 		
 			let content;
 		
-			try {
-		
+			if (rows.ordered.length != 0) {
+			
 				content = JSON.parse(rows.ordered);
-			
-			} catch (error) {
-			
-				content = [];
-			
-			}
-		
-			if (!content || content.length == 0) {
-			
-				client.run("UPDATE users SET ordered = ? WHERE id = ?", [`[${JSON.stringify(data)}]`, "general"])
+				content = JSON.stringify(content).slice(1, JSON.stringify(content).length-1);
+				client.run("UPDATE users SET ordered = ? WHERE id = ?", [`[${content}, ${JSON.stringify(data)}]`, "general"])
 
 			} else {
 			
-				content = JSON.stringify(content).slice(1, JSON.stringify(content).length-1);
-				client.run("UPDATE users SET ordered = ? WHERE id = ?", [`[${content}, ${JSON.stringify(data)}]`, "general"])
+				client.run("UPDATE users SET ordered = ? WHERE id = ?", [`[${JSON.stringify(data)}]`, "general"])
 			
 			}
 		
@@ -245,38 +227,29 @@ app.post('/api/usersAddCart', (req, res) => {
 	client.get("SELECT orders FROM users WHERE id=?", [uid], function (err, rows) {
 		
 			let content;
-		
-			try {
+			
+			if (Object.keys(rows.orders).length != 0) {
 		
 				content = JSON.parse(rows.orders);
 			
-			} catch (error) {
-			
-				content = {};
-			
-			}
-			
-			try {
-			
-				content[key].quantity += quantity;
-				console.log(JSON.stringify(content));
-				client.run("UPDATE users SET orders = ?1 WHERE id = ?2", [`${JSON.stringify(content)}`, uid])
-				return
-			
-			} catch(error) {
-			
-				console.log(error);
-							
-			}
-		
-			if (!content || Object.keys(content).length == 0) {
-			
-				client.run("UPDATE users SET orders = ?1 WHERE id = ?2", [`{"${key}": ${JSON.stringify(order)}}`, uid])
+				try {
+				
+					content[key].quantity += quantity;
+					console.log(JSON.stringify(content));
+					client.run("UPDATE users SET orders = ?1 WHERE id = ?2", [`${JSON.stringify(content)}`, uid])
+					return
+				
+				} catch(error) {
+				
+					console.log(error);
+					content = JSON.stringify(content).slice(1, JSON.stringify(content).length-1);
+					client.run("UPDATE users SET orders = ?1 WHERE id = ?2", [`{${content}, "${key}": ${JSON.stringify(order)}}`, uid])
+								
+				}
 
 			} else {
 			
-				content = JSON.stringify(content).slice(1, JSON.stringify(content).length-1);
-				client.run("UPDATE users SET orders = ?1 WHERE id = ?2", [`{${content}, "${key}": ${JSON.stringify(order)}}`, uid])
+				client.run("UPDATE users SET orders = ?1 WHERE id = ?2", [`{"${key}": ${JSON.stringify(order)}}`, uid])
 			
 			}
 		
@@ -294,20 +267,20 @@ app.get('/api/getOrders', (req, res) => {
 
 	console.log(req.query)
 	
-		client.get('SELECT ordered FROM users WHERE id=?', [req.query.user], function (err, rows) {
+	client.get('SELECT ordered FROM users WHERE id=?', [req.query.user], function (err, rows) {
+		
+			try {
 			
-				try {
+				rows.ordered = JSON.parse(rows.ordered);
+				res.json(rows.ordered);
 				
-					rows.ordered = JSON.parse(rows.ordered);
-					res.json(rows.ordered);
-					
-				} catch (error) {
-				
-					res.status(500);
-				
-				}
+			} catch (error) {
 			
-		});
+				res.status(500);
+			
+			}
+		
+	});
 	
 })
 
