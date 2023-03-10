@@ -264,12 +264,20 @@ app.get('/api/getOrders', (req, res) => {
 
 	console.log(req.query)
 	
-	client.get('SELECT ordered FROM users WHERE id=?', [req.query.user], function (err, rows) {
-		
-			rows.ordered = JSON.parse(rows.ordered);
-			res.json(rows.ordered);
-		
-	});
+	try {
+	
+		client.get('SELECT ordered FROM users WHERE id=?', [req.query.user], function (err, rows) {
+			
+				rows.ordered = JSON.parse(rows.ordered);
+				res.json(rows.ordered);
+			
+		});
+	
+	} catch (error) {
+	
+		console.log(error);
+	
+	}
 	
 	
 })
