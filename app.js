@@ -75,19 +75,19 @@ app.post('/api/addOrder', (req, res) => {
 		client.get("SELECT ordered FROM users WHERE id=?", [req.body.uid], function (err, rows) {
 		
 			let content;
-		
-			if (rows.ordered.length != 0) {
+			
+			try {
 			
 				content = JSON.parse(rows.ordered);
-				content = JSON.stringify(content).slice(1, JSON.stringify(content).length-1);
-				client.run("UPDATE users SET ordered = ? WHERE id = ?", [`[${content}, ${JSON.stringify(data)}]`, req.body.uid])
-
-			} else {
+				content.push(data);
+				client.run("UPDATE users SET ordered = ? WHERE id = ?", [JSON.stringify(content), req.body.uid])
+				
+			} catch (error) {
 			
 				client.run("UPDATE users SET ordered = ? WHERE id = ?", [`[${JSON.stringify(data)}]`, req.body.uid])
 			
 			}
-		
+			
 		})
 	
 	} else {
@@ -96,17 +96,18 @@ app.post('/api/addOrder', (req, res) => {
 		
 			let content;
 		
-			if (rows.ordered.length != 0) {
+			try {
 			
 				content = JSON.parse(rows.ordered);
-				content = JSON.stringify(content).slice(1, JSON.stringify(content).length-1);
-				client.run("UPDATE users SET ordered = ? WHERE id = ?", [`[${content}, ${JSON.stringify(data)}]`, "general"])
-
-			} else {
+				content.push(data);
+				client.run("UPDATE users SET ordered = ? WHERE id = ?", [JSON.stringify(content), "general"])
+				
+			} catch (error) {
 			
 				client.run("UPDATE users SET ordered = ? WHERE id = ?", [`[${JSON.stringify(data)}]`, "general"])
 			
 			}
+			
 		
 		})
 	
@@ -228,30 +229,32 @@ app.post('/api/usersAddCart', (req, res) => {
 		
 			let content;
 			
-			if (Object.keys(rows.orders).length != 0) {
-		
+			console.log(rows);
+			
+			try {
+			
 				content = JSON.parse(rows.orders);
+				content[key].quantity += quantity;
+				console.log(JSON.stringify(content));
+				client.run("UPDATE users SET orders = ?1 WHERE id = ?2", [JSON.stringify(content), uid])
+				return
+			
+			} catch (error) {
 			
 				try {
+					
+					content = JSON.parse(rows.orders);
+					content[key] = order;
+					client.run("UPDATE users SET orders = ?1 WHERE id = ?2", [JSON.stringify(content), uid])
+					
+				} catch (error) {
 				
-					content[key].quantity += quantity;
-					console.log(JSON.stringify(content));
-					client.run("UPDATE users SET orders = ?1 WHERE id = ?2", [`${JSON.stringify(content)}`, uid])
-					return
+					client.run("UPDATE users SET orders = ?1 WHERE id = ?2", [`{"${key}": ${JSON.stringify(order)}}`, uid])
 				
-				} catch(error) {
-				
-					console.log(error);
-					content = JSON.stringify(content).slice(1, JSON.stringify(content).length-1);
-					client.run("UPDATE users SET orders = ?1 WHERE id = ?2", [`{${content}, "${key}": ${JSON.stringify(order)}}`, uid])
-								
 				}
-
-			} else {
-			
-				client.run("UPDATE users SET orders = ?1 WHERE id = ?2", [`{"${key}": ${JSON.stringify(order)}}`, uid])
-			
+							
 			}
+
 		
 	})
 		
