@@ -248,7 +248,7 @@ app.post('/api/usersAddCart', (req, res) => {
 		
 			try {
 		
-				content = JSON.parse(rows.ordered);
+				content = JSON.parse(rows.orders);
 			
 			} catch (error) {
 			
