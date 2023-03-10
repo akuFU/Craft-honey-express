@@ -103,7 +103,17 @@ app.post('/api/addOrder', (req, res) => {
 	
 		client.get("SELECT ordered FROM users WHERE id=?", ["general"], function (err, rows) {
 		
-			let content = JSON.parse(rows.ordered);
+			let content;
+		
+			try {
+		
+				content = JSON.parse(rows.ordered);
+			
+			} catch (error) {
+			
+				content = [];
+			
+			}
 		
 			if (!content || content.length == 0) {
 			
@@ -233,6 +243,8 @@ app.post('/api/usersAddCart', (req, res) => {
 	let order = { id: key, quantity: quantity }
 	
 	client.get("SELECT orders FROM users WHERE id=?", [uid], function (err, rows) {
+		
+			let content;
 		
 			try {
 		
