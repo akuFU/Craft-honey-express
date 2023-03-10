@@ -74,7 +74,17 @@ app.post('/api/addOrder', (req, res) => {
 	
 		client.get("SELECT ordered FROM users WHERE id=?", [req.body.uid], function (err, rows) {
 		
-			let content = JSON.parse(rows.ordered);
+			let content;
+		
+			try {
+		
+				content = JSON.parse(rows.ordered);
+			
+			} catch (error) {
+			
+				content = [];
+			
+			}
 		
 			if (!content || content.length == 0) {
 			
